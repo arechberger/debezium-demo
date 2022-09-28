@@ -1,0 +1,74 @@
+version: '3.4'
+
+volumes:
+  debezium-demo-cat-data:
+    name: debezium-demo-cat-data
+
+services:
+  postgres:
+    container_name: debezium-postgres
+    image: postgres:13.6
+    environment:
+      - "POSTGRES_DB=debezium-demo"
+      - "POSTGRES_USER=debeziumuser"
+      - "POSTGRES_PASSWORD=debeziumuser"
+    ports:
+      - 5432:5432
+    volumes:
+      - "debezium-demo-cat-data:/var/lib/postgresql/data"
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"  
+  zookeeper:
+    image: debezium/zookeeper:latest
+    ports:
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
+  
+  kafka:
+    image: debezium/kafka:latest
+    ports:
+     - 9092:9092
+    links:
+     - zookeeper
+    environment:
+     - ZOOKEEPER_CONNECT=zookeeper:2181
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    ports:
+      - 8181:8181
+      - 8081:8081
+    environment:
+      - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=zookeeper:2181
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+      - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081
+    links:
+      - zookeeper  
+  connect:
+    image: debezium/connect:latest
+    ports:
+     - 8083:8083
+    links:
+     - kafka
+     - postgres
+     - schema-registry
+    environment:
+     - BOOTSTRAP_SERVERS=kafka:9092
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=my_connect_configs
+     - OFFSET_STORAGE_TOPIC=my_connect_offsets
+     - STATUS_STORAGE_TOPIC=my_connect_statuses
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui
+    ports:
+      - 8005:8080
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+      - KAFKA_CLUSTERS_0_SCHEMAREGISTRY=http://schema-registry:8081
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=local
+      - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://connect:8083

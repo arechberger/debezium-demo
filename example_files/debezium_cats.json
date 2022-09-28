@@ -1,0 +1,23 @@
+{
+    "name":"debezium_cat_cats",
+    "config":{
+      "name": "debezium_cat_cats",
+      "slot.name": "dbz_cat_cats",
+      "plugin.name": "pgoutput",
+  
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "tombstones.on.delete": "false",
+  
+      "tasks.max": "1",
+  
+      "database.hostname": "postgres",
+      "database.port": "5432",
+      "database.user": "debeziumuser",
+      "database.password": "debeziumuser",
+      "database.dbname": "debezium-demo",
+      "database.server.name": "cat",
+  
+      "schema.include​.list": "public",
+      "table.include​.list": "public.cats"
+    }
+  }
