@@ -76,3 +76,30 @@ services:
       - KAFKA_CLUSTERS_0_SCHEMAREGISTRY=http://schema-registry:8081
       - KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME=local
       - KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS=http://connect:8083
+
+  python-producer:
+    image: python-kafka-test
+    build: 
+      context: python-client 
+    environment:
+      - KAFKA_BOOTSTRAP_SERVER=kafka:9092
+      - KAFKA_TOPIC=numtest
+      - SEND_INTERVAL_SEC=1
+      - SEND_INITIAL_BURST=1000
+    command: ["python", "producer.py"]
+    depends_on:
+      - kafka    
+    profiles: ["python"]
+
+  python-consumer:
+    image: python-kafka-test
+    build: 
+      context: python-client 
+    environment:
+      - KAFKA_BOOTSTRAP_SERVER=kafka:9092
+      - KAFKA_TOPIC=numtest
+      - KAFKA_CONSUMER_GROUP=my-group
+    command: ["python", "consumer.py"]
+    depends_on:
+      - kafka
+    profiles: ["python"]
